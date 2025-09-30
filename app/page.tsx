@@ -37,9 +37,11 @@ export default function QuakeTrakr() {
 
   const filteredEarthquakes = useMemo(() => {
     if (!data?.features) return []
-    return data.features.filter(
-      (eq) => eq.properties.mag >= filters.minMagnitude && eq.properties.mag <= filters.maxMagnitude,
-    )
+    return data.features.filter((eq) => {
+      const mag = eq.properties.mag
+      // Filter out null/undefined magnitudes and apply range filter
+      return mag !== null && mag !== undefined && mag >= filters.minMagnitude && mag <= filters.maxMagnitude
+    })
   }, [data, filters.minMagnitude, filters.maxMagnitude])
 
   const stats = useMemo(() => {
@@ -52,12 +54,24 @@ export default function QuakeTrakr() {
       }
     }
 
-    const magnitudes = filteredEarthquakes.map((eq) => eq.properties.mag)
+    const magnitudes = filteredEarthquakes
+      .map((eq) => eq.properties.mag)
+      .filter((mag): mag is number => mag !== null && mag !== undefined)
+
+    if (magnitudes.length === 0) {
+      return {
+        total: filteredEarthquakes.length,
+        avgMagnitude: 0,
+        maxMagnitude: 0,
+        significant: 0,
+      }
+    }
+
     return {
       total: filteredEarthquakes.length,
       avgMagnitude: magnitudes.reduce((a, b) => a + b, 0) / magnitudes.length,
       maxMagnitude: Math.max(...magnitudes),
-      significant: filteredEarthquakes.filter((eq) => eq.properties.mag >= 5).length,
+      significant: filteredEarthquakes.filter((eq) => eq.properties.mag !== null && eq.properties.mag >= 5).length,
     }
   }, [filteredEarthquakes])
 

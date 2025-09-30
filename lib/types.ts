@@ -1,5 +1,5 @@
 export interface EarthquakeProperties {
-  mag: number
+  mag: number | null
   place: string
   time: number
   updated: number
